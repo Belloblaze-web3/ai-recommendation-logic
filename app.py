@@ -1,12 +1,14 @@
-"""Command-line interface for the AI recommendation project."""
+"""Command-line interface for the SignalMatch recommendation engine."""
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 
-from recommender import load_engine
+from recommender import Recommendation, load_engine
 
 
-def print_recommendations(recommendations) -> None:
+def print_recommendations(recommendations: Sequence[Recommendation]) -> None:
+    """Print ranked recommendations in a readable terminal format."""
     print("\nRecommended learning resources\n" + "=" * 34)
     for index, recommendation in enumerate(recommendations, 1):
         item = recommendation.item
@@ -17,17 +19,40 @@ def print_recommendations(recommendations) -> None:
         print(f"   {item.description}")
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Find learning resources matching your interests")
-    parser.add_argument("--interests", help="Comma-separated interests, e.g. 'python, AI, data'")
-    parser.add_argument("--top", type=int, default=5, help="Number of recommendations (default: 5)")
-    parser.add_argument("--rating", type=float, help="Optional preferred item rating from 1 to 5")
-    args = parser.parse_args()
+def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI parser separately so it can be tested or reused."""
+    parser = argparse.ArgumentParser(
+        description="Find learning resources matching your interests",
+    )
+    parser.add_argument(
+        "--interests",
+        help="Comma-separated interests, for example: 'python, AI, data'",
+    )
+    parser.add_argument(
+        "--top",
+        type=int,
+        default=5,
+        help="Number of recommendations to display (default: 5)",
+    )
+    parser.add_argument(
+        "--rating",
+        type=float,
+        help="Optional preferred item rating from 1 to 5",
+    )
+    return parser
 
+
+def main() -> None:
+    """Run the interactive or argument-based recommendation flow."""
+    parser = build_parser()
+    args = parser.parse_args()
     interests = args.interests or input("What are you interested in? ")
-    engine = load_engine()
     try:
-        recommendations = engine.recommend(interests, top_k=args.top, preferred_rating=args.rating)
+        recommendations = load_engine().recommend(
+            interests,
+            top_k=args.top,
+            preferred_rating=args.rating,
+        )
     except ValueError as error:
         parser.error(str(error))
     print_recommendations(recommendations)

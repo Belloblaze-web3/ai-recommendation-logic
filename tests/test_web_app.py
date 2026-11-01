@@ -1,10 +1,11 @@
 import unittest
 
-from web_app import app
+from web_app import create_app
 
 
 class WebAppTests(unittest.TestCase):
     def setUp(self):
+        app = create_app()
         app.config["TESTING"] = True
         self.client = app.test_client()
 
@@ -29,6 +30,16 @@ class WebAppTests(unittest.TestCase):
         response = self.client.get("/api/recommend?interests=the+and")
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.get_json())
+
+    def test_json_api_supports_bounded_top_k(self):
+        response = self.client.get("/api/recommend?interests=python&top_k=2")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.get_json()["recommendations"]), 2)
+
+    def test_json_api_rejects_invalid_rating(self):
+        response = self.client.get("/api/recommend?interests=python&rating=6")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("rating", response.get_json()["error"])
 
     def test_route_manifest_is_available(self):
         response = self.client.get("/manus-routes.json")

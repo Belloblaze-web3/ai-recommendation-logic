@@ -28,6 +28,14 @@ class RecommendationEngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.engine.recommend("python", top_k=0)
 
+    def test_invalid_rating_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.engine.recommend("python", preferred_rating=6)
+
+    def test_invalid_minimum_score_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.engine.recommend("python", minimum_score=1.1)
+
     def test_catalog_is_nonempty(self):
         self.assertGreaterEqual(len(self.engine.items), 8)
         self.assertTrue(all(isinstance(item, Item) for item in self.engine.items))

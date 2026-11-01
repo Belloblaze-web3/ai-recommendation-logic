@@ -10,6 +10,10 @@ from typing import Iterable, Sequence
 STOPWORDS = {
     "a", "an", "and", "for", "from", "in", "into", "of", "on", "or", "the", "to", "with"
 }
+TAG_WEIGHT = 0.55
+KEYWORD_WEIGHT = 0.25
+RATING_WEIGHT = 0.15
+POPULARITY_WEIGHT = 0.05
 
 
 def tokenize(text: str) -> set[str]:
@@ -84,6 +88,10 @@ class RecommendationEngine:
             raise ValueError("Enter at least one meaningful interest")
         if top_k < 1:
             raise ValueError("top_k must be at least 1")
+        if not 0.0 <= minimum_score <= 1.0:
+            raise ValueError("minimum_score must be between 0 and 1")
+        if preferred_rating is not None and not 1.0 <= preferred_rating <= 5.0:
+            raise ValueError("preferred_rating must be between 1 and 5")
 
         results: list[Recommendation] = []
         for item in self.items:
@@ -94,10 +102,10 @@ class RecommendationEngine:
             rating_alignment = self._rating_alignment(preferred_rating, item.rating)
             popularity_score = max(0.0, min(1.0, item.popularity))
             score = (
-                0.55 * tag_similarity
-                + 0.25 * keyword_similarity
-                + 0.15 * rating_alignment
-                + 0.05 * popularity_score
+                TAG_WEIGHT * tag_similarity
+                + KEYWORD_WEIGHT * keyword_similarity
+                + RATING_WEIGHT * rating_alignment
+                + POPULARITY_WEIGHT * popularity_score
             )
             matched = tuple(sorted(user_tokens & (tag_tokens | item_tokens)))
             if score >= minimum_score:
